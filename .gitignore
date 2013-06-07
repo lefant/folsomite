@@ -1,1 +1,3 @@
-ebin
+ebin/*.app
+ebin/*.beam
+deps
