@@ -152,6 +152,7 @@ node_key() ->
 
 
 a2l(X) when is_list(X) -> X;
+a2l(X) when is_binary(X) -> binary_to_list(X);
 a2l(X) when is_atom(X) -> atom_to_list(X);
 a2l(X) when is_integer(X) -> integer_to_list(X);
 a2l(X) when is_float(X) -> float_to_list(X);
