@@ -89,19 +89,22 @@ get_stats() ->
     Memory ++ Stats ++ lists:flatmap(fun expand_metric/1, Metrics).
 
 
-expand_metric({Name, [{type, Type}]}) ->
-    M = case Type of
+expand_metric({Name, Opts}) ->
+    case proplists:get_value(type, Opts) of
+            undefined -> [];
             histogram ->
-                proplists:delete(histogram,
-                                 folsom_metrics:get_histogram_statistics(Name));
-            Type1 ->
-                case lists:member(Type1,
-                                  [counter, gauge, meter, meter_reader]) of
-                    true -> folsom_metrics:get_metric_value(Name);
+                Stats = folsom_metrics:get_histogram_statistics(Name),
+                M = proplists:delete(histogram, Stats),
+                expand0(M, [Name]);
+            Type ->
+                case lists:member(Type,
+                                  [counter, gauge, meter, spiral, meter_reader]) of
+                    true ->
+                        M = folsom_metrics:get_metric_value(Name),
+                        expand0(M, [Name]);
                     false -> []
                 end
-        end,
-    expand0(M, [Name]);
+        end;
 expand_metric(_) ->
     [].
 
