@@ -61,7 +61,9 @@ You can start it from the shell:
                   {histogram, [{my_app, my_histo}, slide_uniform, {60, 1028}]}
                  ]}
         {folsomite,
-         [{graphite_host, "graphite.example.com"}]},
+         [{graphite_host, "graphite.example.com"},
+          {node_key, "billing-prod-us-east-1"}
+         ]},
         {zeta,
          [{clients,
            [{default,
