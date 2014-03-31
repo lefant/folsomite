@@ -149,10 +149,14 @@ node_prefix() ->
     A.
 
 node_key() ->
-    NodeList = atom_to_list(node()),
-    Opts = [global, {return, list}],
-    re:replace(NodeList, "[\@\.]", "_", Opts).
-
+    case application:get_env(?APP, node_key) of
+        undefined ->
+            NodeList = atom_to_list(node()),
+            Opts = [global, {return, list}],
+            re:replace(NodeList, "[\@\.]", "_", Opts);
+        {ok, NodeKey} when is_list(NodeKey) ->
+            NodeKey
+    end.
 
 a2l(X) when is_list(X) -> X;
 a2l(X) when is_binary(X) -> binary_to_list(X);
