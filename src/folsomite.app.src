@@ -9,8 +9,7 @@
                ]},
   {applications, [kernel,
                   stdlib,
-                  folsom,
-                  zeta
+                  folsom
                  ]},
   {mod, {folsomite_app, no_arg}},
   {env, [{graphite_host, "localhost"},

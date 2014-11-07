@@ -19,8 +19,8 @@
          handle_info/2, code_change/3]).
 
 -record(state, {socket :: inet:socket(),
-                host :: inet:host(),
-                port :: inet:inet_port()
+                host :: inet:hostname(),
+                port :: inet:port_number()
                }).
 
 -define(RECONNECT_TIME, 3000).
@@ -65,7 +65,7 @@ handle_info(connect, #state{host=Host, port=Port} = State) ->
         {ok, Sock} ->
             {noreply, State#state{socket=Sock}};
         {error, Reason}  ->
-            error_logger:info_msg(Reason),
+            error_logger:info_msg("Folsomite connect failed: ~p", [Reason]),
             erlang:send_after(?RECONNECT_TIME, self(), connect),
             {noreply, State}
     end;            
