@@ -1,8 +1,8 @@
 %%-*- mode: erlang -*-
 {application, folsomite,
  [
-  {description, "Blow up your Graphite / Riemann server with Folsom metrics"},
-  {vsn, "1.0.0"},
+  {description, "Blow up your Graphite server with Folsom metrics"},
+  {vsn, "1.1.0"},
   {registered, [folsomite_sup,
                 folsomite_server,
                 folsomite_graphite_client_sup
