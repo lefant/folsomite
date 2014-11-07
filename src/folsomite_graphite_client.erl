@@ -18,51 +18,72 @@
 -export([init/1, terminate/2, handle_call/3, handle_cast/2,
          handle_info/2, code_change/3]).
 
--record(state, {tcp_socket :: inet:socket()}).
+-record(state, {socket :: inet:socket(),
+                host :: inet:host(),
+                port :: inet:inet_port()
+               }).
+
+-define(RECONNECT_TIME, 3000).
 
 %% management api
-start_link(Host, Port) -> gen_server:start_link(?MODULE, [Host, Port], []).
+start_link(Host, Port) ->
+    gen_server:start_link(?MODULE, [Host, Port], []).
 
 %% api
-send(Socket, Message) -> gen_server:cast(Socket, {send, Message}).
+send(Socket, Message) ->
+    gen_server:cast(Socket, {send, Message}).
 
 %% gen_server callbacks
 init([Host, Port]) ->
-    {ok, TCPSocket} = gen_tcp:connect(Host,
-                                      Port,
-                                      [binary, {active, false}],
-                                      5000),
-    {ok, #state{tcp_socket = TCPSocket}}.
+    self() ! connect,
+    {ok, #state{host=Host, port=Port}}.
 
 handle_call(Call, _, State) ->
     unexpected(call, Call),
     {noreply, State}.
 
-handle_cast({send, Message}, #state{tcp_socket = TCPSocket} = State) ->
-    case gen_tcp:send(TCPSocket, Message) of
+handle_cast({send, _Message}, #state{socket=undefined} = State) ->
+    {noreply, State};
+handle_cast({send, Message}, #state{socket=Sock} = State) ->
+    case gen_tcp:send(Sock, Message) of
         ok ->
             {noreply, State};
-        {error, closed} ->
-            error_logger:info_msg("folsomite_graphite_client disconnected"),
-            {stop, {shutdown, connection_closed}, State}
+        {error, Reason} when Reason == econnrefused orelse
+                             Reason == closed ->
+            ok = maybe_close_socket(Sock),
+            error_logger:info_msg("folsomite connection: ~s", [Reason]),
+            erlang:send_after(?RECONNECT_TIME, self(), connect),
+            {noreply, State#state{socket=undefined}}
     end;
 handle_cast(Cast, State) ->
     unexpected(cast, Cast),
     {noreply, State}.
 
+handle_info(connect, #state{host=Host, port=Port} = State) ->
+    error_logger:info_msg("Folsomite attempting to reconnect: ~p:~p", [Host, Port]),
+    case gen_tcp:connect(Host, Port, [binary, {active, false}], 5000) of
+        {ok, Sock} ->
+            {noreply, State#state{socket=Sock}};
+        {error, Reason}  ->
+            error_logger:info_msg(Reason),
+            erlang:send_after(?RECONNECT_TIME, self(), connect),
+            {noreply, State}
+    end;            
 handle_info(Info, State) ->
     unexpected(info, Info),
     {noreply, State}.
 
-terminate(_, #state{tcp_socket = TCPSocket}) ->
-    case TCPSocket of
-        undefined -> ok;
-        TCPSocket1 -> gen_tcp:close(TCPSocket1)
-    end.
+terminate(_, #state{socket=Sock}) ->
+    ok = maybe_close_socket(Sock).
 
-code_change(_, State, _) -> {ok, State}.
-
+code_change(_, State, _) ->
+    {ok, State}.
 
 %% internal
 unexpected(Type, Message) ->
     error_logger:info_msg(" unexpected ~p ~p~n", [Type, Message]).
+
+maybe_close_socket(undefined) ->
+    ok;
+maybe_close_socket(Sock) when is_port(Sock) ->
+    ok = gen_tcp:close(Sock).
