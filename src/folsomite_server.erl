@@ -138,7 +138,8 @@ node_key() ->
         undefined ->
             NodeList = atom_to_list(node()),
             Opts = [global, {return, list}],
-            re:replace(NodeList, "[\@\.]", "_", Opts);
+            NodeList1 = re:replace(NodeList, "[\.]", "_", Opts),
+            re:replace(NodeList1, "[\@]", ".", Opts);
         {ok, NodeKey} when is_list(NodeKey) ->
             NodeKey
     end.
