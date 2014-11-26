@@ -24,16 +24,15 @@
                }).
 
 -define(RECONNECT_TIME, 3000).
+-define(CONNECT_TIMEOUT, 5000).
+-define(SEND_TIMEOUT, 30000).
 
-%% management api
 start_link(Host, Port) ->
     gen_server:start_link(?MODULE, [Host, Port], []).
 
-%% api
 send(Socket, Message) ->
     gen_server:cast(Socket, {send, Message}).
 
-%% gen_server callbacks
 init([Host, Port]) ->
     self() ! connect,
     {ok, #state{host=Host, port=Port}}.
@@ -49,9 +48,10 @@ handle_cast({send, Message}, #state{socket=Sock} = State) ->
         ok ->
             {noreply, State};
         {error, Reason} when Reason == econnrefused orelse
-                             Reason == closed ->
+                             Reason == closed orelse
+                             Reason == timeout ->
             ok = maybe_close_socket(Sock),
-            error_logger:info_msg("folsomite connection: ~s", [Reason]),
+            error_logger:info_msg("Folsomite connection: ~s", [Reason]),
             erlang:send_after(?RECONNECT_TIME, self(), connect),
             {noreply, State#state{socket=undefined}}
     end;
@@ -61,7 +61,8 @@ handle_cast(Cast, State) ->
 
 handle_info(connect, #state{host=Host, port=Port} = State) ->
     error_logger:info_msg("Folsomite attempting to reconnect: ~p:~p", [Host, Port]),
-    case gen_tcp:connect(Host, Port, [binary, {active, false}], 5000) of
+    Opts = [binary, {active, false}, {send_timeout, ?SEND_TIMEOUT}],
+    case gen_tcp:connect(Host, Port, Opts, ?CONNECT_TIMEOUT) of
         {ok, Sock} ->
             {noreply, State#state{socket=Sock}};
         {error, Reason}  ->
@@ -79,9 +80,8 @@ terminate(_, #state{socket=Sock}) ->
 code_change(_, State, _) ->
     {ok, State}.
 
-%% internal
 unexpected(Type, Message) ->
-    error_logger:info_msg(" unexpected ~p ~p~n", [Type, Message]).
+    error_logger:info_msg("Folsomite unexpected ~p ~p~n", [Type, Message]).
 
 maybe_close_socket(undefined) ->
     ok;
