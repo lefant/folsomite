@@ -58,5 +58,3 @@ You can start it from the shell:
          ]}
        ]}
      ]}.
-
-(the histogram example above needs https://github.com/boundary/folsom/pull/31).
