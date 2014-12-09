@@ -81,7 +81,7 @@ code_change(_, State, _) ->
     {ok, State}.
 
 unexpected(Type, Message) ->
-    error_logger:info_msg("Folsomite unexpected ~p ~p~n", [Type, Message]).
+    error_logger:error_msg("Folsomite unexpected ~p ~p~n", [Type, Message]).
 
 maybe_close_socket(undefined) ->
     ok;
