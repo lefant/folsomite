@@ -42,11 +42,11 @@ handle_call(Call, _, State) ->
     {noreply, State}.
 
 handle_cast({send, _Message}, #state{socket=undefined} = State) ->
-    {noreply, State};
+    {noreply, State, hibernate};
 handle_cast({send, Message}, #state{socket=Sock} = State) ->
     case gen_tcp:send(Sock, Message) of
         ok ->
-            {noreply, State};
+            {noreply, State, hibernate};
         {error, Reason} when Reason == econnrefused orelse
                              Reason == closed orelse
                              Reason == timeout ->
