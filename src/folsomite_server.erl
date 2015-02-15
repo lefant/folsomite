@@ -79,9 +79,9 @@ code_change(_, State, _) -> {ok, State}.
 get_stats() ->
     Memory = expand0(folsom_vm_metrics:get_memory(), [memory, vm]),
     Stats = expand0(folsom_vm_metrics:get_statistics(), [vm]),
-    Ports = expand0([{total, length(erlang:ports())}], [ports, vm]),
+    Info = expand0(get_system_info(), [system_info, vm]),
     Metrics = folsom_metrics:get_metrics_info(),
-    Memory ++ Stats ++ Ports ++ lists:flatmap(fun expand_metric/1, Metrics).
+    Memory ++ Stats ++ Info ++ lists:flatmap(fun expand_metric/1, Metrics).
 
 
 expand_metric({Name, Opts}) ->
@@ -167,3 +167,8 @@ get_env(Name, Default) ->
 
 unexpected(Type, Message) ->
     error_logger:info_msg(" unexpected ~p ~p~n", [Type, Message]).
+
+get_system_info() ->
+    L = folsom_vm_metrics:get_system_info(),
+    [{K, V} || {K, V} <- L,
+               lists:member(K, [port_count, process_count])].
