@@ -20,10 +20,11 @@
 
 -record(state, {socket :: inet:socket(),
                 host :: inet:hostname(),
-                port :: inet:port_number()
+                port :: inet:port_number(),
+                reconnect_time = 1000 :: non_neg_integer()
                }).
 
--define(RECONNECT_TIME, 3000).
+-define(MAX_RECONNECT_TIME, 30000).
 -define(CONNECT_TIMEOUT, 5000).
 -define(SEND_TIMEOUT, 30000).
 
@@ -43,7 +44,7 @@ handle_call(Call, _, State) ->
 
 handle_cast({send, _Message}, #state{socket=undefined} = State) ->
     {noreply, State, hibernate};
-handle_cast({send, Message}, #state{socket=Sock} = State) ->
+handle_cast({send, Message}, #state{socket=Sock, reconnect_time=RCT} = State) ->
     case gen_tcp:send(Sock, Message) of
         ok ->
             {noreply, State, hibernate};
@@ -52,24 +53,24 @@ handle_cast({send, Message}, #state{socket=Sock} = State) ->
                              Reason == timeout ->
             ok = maybe_close_socket(Sock),
             error_logger:info_msg("Folsomite connection: ~s", [Reason]),
-            erlang:send_after(?RECONNECT_TIME, self(), connect),
+            erlang:send_after(RCT, self(), connect),
             {noreply, State#state{socket=undefined}}
     end;
 handle_cast(Cast, State) ->
     unexpected(cast, Cast),
     {noreply, State}.
 
-handle_info(connect, #state{host=Host, port=Port} = State) ->
-    error_logger:info_msg("Folsomite attempting to reconnect: ~p:~p", [Host, Port]),
+handle_info(connect, #state{host=Host, port=Port, reconnect_time=RCT} = State) ->
+    error_logger:info_msg("Folsomite attempting to reconnect: ~s:~p", [Host, Port]),
     Opts = [binary, {active, false}, {send_timeout, ?SEND_TIMEOUT}],
     case gen_tcp:connect(Host, Port, Opts, ?CONNECT_TIMEOUT) of
         {ok, Sock} ->
             {noreply, State#state{socket=Sock}};
         {error, Reason}  ->
             error_logger:info_msg("Folsomite connect failed: ~p", [Reason]),
-            erlang:send_after(?RECONNECT_TIME, self(), connect),
-            {noreply, State}
-    end;            
+            erlang:send_after(RCT, self(), connect),
+            {noreply, State#state{reconnect_time=increase_connection_timeout(RCT)}}
+    end;
 handle_info(Info, State) ->
     unexpected(info, Info),
     {noreply, State}.
@@ -87,3 +88,6 @@ maybe_close_socket(undefined) ->
     ok;
 maybe_close_socket(Sock) when is_port(Sock) ->
     ok = gen_tcp:close(Sock).
+
+increase_connection_timeout(Current) ->
+    min(Current*2, ?MAX_RECONNECT_TIME).
