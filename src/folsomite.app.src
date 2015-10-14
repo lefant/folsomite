@@ -15,6 +15,7 @@
   {env, [{graphite_host, "localhost"},
          {graphite_port, 2003},
          {flush_interval, 60000},
-         {tags, []}
+         {tags, []},
+         {common_prefix, "folsomite"}
         ]}
  ]}.
