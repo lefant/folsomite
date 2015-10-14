@@ -123,7 +123,8 @@ send_stats(State) ->
     end.
 
 format1(Base, {K, V}, Timestamp) ->
-    ["folsomite.", Base, ".", space2dot(K), " ", a2l(V), " ", Timestamp, "\n"].
+    [application:get_env(?APP, common_prefix, "folsomite"),
+     ".", Base, ".", space2dot(K), " ", a2l(V), " ", Timestamp, "\n"].
 
 num2str(NN) -> lists:flatten(io_lib:format("~w",[NN])).
 unixtime()  -> {Meg, S, _} = os:timestamp(), Meg*1000000 + S.
