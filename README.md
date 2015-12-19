@@ -1,5 +1,7 @@
 ### Folsomite
 
+[![Hex pm](http://img.shields.io/hexpm/v/folsomite.svg?style=flat)](https://hex.pm/packages/folsomite)
+
 [Folsom][1] is an Erlang based metrics system inspired by Coda Hale's
 metrics (https://github.com/codahale/metrics/).
 
