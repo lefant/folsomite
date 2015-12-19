@@ -2,7 +2,7 @@
 {application, folsomite,
  [
   {description, "Blow up your Graphite server with Folsom metrics"},
-  {vsn, "1.2.6"},
+  {vsn, "1.2.7"},
   {registered, [folsomite_sup,
                 folsomite_server,
                 folsomite_graphite_client_sup
@@ -17,5 +17,6 @@
          {flush_interval, 60000},
          {tags, []},
          {common_prefix, "folsomite"}
-        ]}
+        ]},
+  {maintainers, ["Paul Oliver"]}
  ]}.
