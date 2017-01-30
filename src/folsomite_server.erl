@@ -14,6 +14,10 @@
 -module(folsomite_server).
 -behaviour(gen_server).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 %% management api
 -export([start_link/0]).
 
@@ -146,7 +150,11 @@ node_key() ->
             NodeKey
     end.
 
-a2l(X) when is_list(X) -> X;
+a2l(X) when is_list(X) ->
+  case io_lib:printable_unicode_list(X) of
+    true -> X;
+    false -> string:join([a2l(A) || A <- X], " ")
+  end;
 a2l(X) when is_binary(X) -> binary_to_list(X);
 a2l(X) when is_atom(X) -> atom_to_list(X);
 a2l(X) when is_integer(X) -> integer_to_list(X);
@@ -173,3 +181,16 @@ get_system_info() ->
     L = folsom_vm_metrics:get_system_info(),
     [{K, V} || {K, V} <- L,
                lists:member(K, [port_count, process_count])].
+
+-ifdef(TEST).
+
+a2l_test() ->
+  ?assertEqual("string", a2l("string")),
+  ?assertEqual("other list 12", a2l([other, "list", 12])),
+  ?assertEqual("binary", a2l(<<"binary">>)),
+  ?assertEqual("atom", a2l(atom)),
+  ?assertEqual("123", a2l(123)),
+  ?assertEqual("1.00000000000000000000e+00", a2l(1.0)),
+  ?assertEqual("some metric", a2l({some, "metric"})).
+
+-endif.
