@@ -65,7 +65,7 @@ handle_info(connect, #state{host=Host, port=Port, reconnect_time=RCT, socket=Old
     Opts = [binary, {active, false}, {send_timeout, ?SEND_TIMEOUT}],
     case gen_tcp:connect(Host, Port, Opts, ?CONNECT_TIMEOUT) of
         {ok, Sock} ->
-            ok = gen_tcp:close(OldSock),
+            ok = maybe_close_socket(OldSock),
             {noreply, State#state{socket=Sock}};
         {error, Reason}  ->
             error_logger:info_msg("Folsomite connect failed: ~p", [Reason]),
