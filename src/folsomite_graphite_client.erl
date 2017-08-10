@@ -60,11 +60,12 @@ handle_cast(Cast, State) ->
     unexpected(cast, Cast),
     {noreply, State}.
 
-handle_info(connect, #state{host=Host, port=Port, reconnect_time=RCT} = State) ->
+handle_info(connect, #state{host=Host, port=Port, reconnect_time=RCT, socket=OldSock} = State) ->
     error_logger:info_msg("Folsomite attempting to reconnect: ~s:~p", [Host, Port]),
     Opts = [binary, {active, false}, {send_timeout, ?SEND_TIMEOUT}],
     case gen_tcp:connect(Host, Port, Opts, ?CONNECT_TIMEOUT) of
         {ok, Sock} ->
+            ok = gen_tcp:close(OldSock),
             {noreply, State#state{socket=Sock}};
         {error, Reason}  ->
             error_logger:info_msg("Folsomite connect failed: ~p", [Reason]),
