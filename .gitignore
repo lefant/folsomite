@@ -2,3 +2,4 @@ ebin/*.app
 ebin/*.beam
 deps
 _build
+.eunit/
