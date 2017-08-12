@@ -14,6 +14,7 @@
 -behaviour(supervisor).
 
 -export([get_client/0]).
+-export([reconnect_client/0]).
 -export([start_link/0]).
 -export([init/1]).
 
@@ -29,6 +30,11 @@ get_client() ->
 
 %% management api
 start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, no_arg).
+
+reconnect_client() ->
+    {ok, Pid} = get_client(),
+    Pid ! connect,
+    ok.
 
 %% supervisor callback
 init(no_arg) -> {ok, {{one_for_one, 5, 10}, []}}.
