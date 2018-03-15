@@ -127,8 +127,14 @@ send_stats(State) ->
     end.
 
 format1(Base, {K, V}, Timestamp) ->
-    [application:get_env(?APP, common_prefix, "folsomite"),
-     ".", Base, ".", space2dot(K), " ", a2l(V), " ", Timestamp, "\n"].
+    Metric = [application:get_env(?APP, common_prefix, "folsomite"),
+              ".", Base, ".", space2dot(K), " ", a2l(V), " ", Timestamp, "\n"],
+    case application:get_env(?APP, max_metric_name_length) of
+        undefined ->
+            Metric;
+        {ok, Length} when is_integer(Length) ->
+            truncate_metric_name(Metric, Length)
+    end.
 
 num2str(NN) -> lists:flatten(io_lib:format("~w",[NN])).
 unixtime()  -> {Meg, S, _} = os:timestamp(), Meg*1000000 + S.
@@ -181,6 +187,10 @@ get_system_info() ->
     L = folsom_vm_metrics:get_system_info(),
     [{K, V} || {K, V} <- L,
                lists:member(K, [port_count, process_count])].
+
+truncate_metric_name(Metric, Length) ->
+    Format = lists:flatten(io_lib:format("~~-~Bs~n", [Length - 1])),
+    io_lib:format(Format, [Metric]).
 
 -ifdef(TEST).
 
