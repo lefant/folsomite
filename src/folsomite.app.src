@@ -18,5 +18,6 @@
          {tags, []},
          {common_prefix, "folsomite"}
         ]},
+  {licenses, ["Apache License 2.0"]},
   {maintainers, ["Paul Oliver"]}
  ]}.
