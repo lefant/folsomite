@@ -189,7 +189,7 @@ get_system_info() ->
                lists:member(K, [port_count, process_count])].
 
 truncate_metric_name(Metric, Length) ->
-    Format = lists:flatten(io_lib:format("~~-~Bs~n", [Length])),
+    Format = lists:flatten(io_lib:format("~~-~Bs~n", [Length - 1])),
     io_lib:format(Format, [Metric]).
 
 -ifdef(TEST).
