@@ -18,7 +18,7 @@
 -export([init/1, terminate/2, handle_call/3, handle_cast/2,
          handle_info/2, code_change/3]).
 
--record(state, {socket :: inet:socket(),
+-record(state, {socket :: undefined | inet:socket(),
                 host :: inet:hostname(),
                 port :: inet:port_number(),
                 reconnect_time = 1000 :: non_neg_integer()

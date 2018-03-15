@@ -132,7 +132,7 @@ format1(Base, {K, V}, Timestamp) ->
     case application:get_env(?APP, max_metric_name_length) of
         undefined ->
             Metric;
-        Length when is_integer(Length) ->
+        {ok, Length} when is_integer(Length) ->
             truncate_metric_name(Metric, Length)
     end.
 
