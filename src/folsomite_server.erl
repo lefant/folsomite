@@ -58,8 +58,8 @@ handle_cast(Cast, State) ->
     unexpected(cast, Cast),
     {noreply, State}.
 
-handle_info({timeout, _R, ?TIMER_MSG},
-            #state{timer_ref = _R, flush_interval = FlushInterval} = State) ->
+handle_info({timeout, Tref, ?TIMER_MSG},
+            #state{timer_ref = Tref, flush_interval = FlushInterval} = State) ->
     Ref = erlang:start_timer(FlushInterval, self(), ?TIMER_MSG),
     F = fun() -> send_stats(State) end,
     folsom_metrics:histogram_timed_update({?APP, send_stats}, F),
